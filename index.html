@@ -488,9 +488,7 @@ function result(){
    ${mainPlanHtml(d)}
    <section class="panel"><h2>分享给朋友</h2>
    <p>可以把这份结果卡分享给朋友，也欢迎他们来测测自己的下班恢复方式。分享图片会包含你的动物画像、四维解读和行动建议。</p>
-   <label class="share-label" for="shareUrl">邀请朋友参与的测试链接（选填）</label>
-   <input id="shareUrl" class="url-input" type="url" placeholder="部署后自动识别；或粘贴 https://网址" autocomplete="url"/>
-   <p class="fine">本地打开 HTML 时没有公开网址，需手动填写。二维码不会包含你的答题数据。</p>
+   <p class="fine">结果卡中的二维码可邀请朋友打开测试首页，不包含你的答题数据。</p>
    <div class="share-actions"><button class="primary full" id="save">保存我的专属长图报告</button>
    <button class="secondary full" id="preview">先预览报告 · 长按可保存</button></div>
    <div class="result-bottom-actions"><button class="secondary" id="edit">← 返回修改</button>
@@ -1764,12 +1762,13 @@ return {QRCode:require("./index"),ErrorLevel:require("./QRErrorCorrectLevel")};
 
 
 function getPublicSiteUrl(){
-  const configured=(document.getElementById("shareUrl")?.value||"").trim();
-  if(configured){
-    try{const u=new URL(configured);if(u.protocol!=="https:"&&u.protocol!=="http:")return null;return u.origin+u.pathname;}catch(e){return null;}
+  // 发布时自动使用当前网站地址；本地预览时使用已经公布的 GitHub Pages 正式地址。
+  const fallback="https://apeacedove.github.io/lifelab-energy/";
+  if(location.protocol==="https:"||location.protocol==="http:"){
+    const url=new URL(location.href);
+    return url.origin+url.pathname;
   }
-  if(location.protocol==="https:"||location.protocol==="http:")return location.origin+location.pathname;
-  return null;
+  return fallback;
 }
 function createQrMatrix(url){
   const qr=new QRLib.QRCode(-1,QRLib.ErrorLevel.M);
@@ -1983,7 +1982,6 @@ function createShareCanvas(d,url){
 }
 function previewResultCard(d){
   const url=getPublicSiteUrl();
-  if(document.getElementById("shareUrl")?.value.trim()&&!url){alert("请填写以 http:// 或 https:// 开头的有效网址");return;}
   try {
     const c=createShareCanvas(d,url),img=document.createElement("img");
     img.src=c.toDataURL("image/png");img.alt="长按保存你的恢复属性分享卡";
@@ -2000,7 +1998,6 @@ function previewResultCard(d){
 
 async function exportResultCard(d){
   const url=getPublicSiteUrl();
-  if(document.getElementById("shareUrl")?.value.trim()&&!url){alert("请输入正确的网址（以 https:// 开头）");return;}
   const c=createShareCanvas(d,url);
   const name="LifeLab-我的恢复画像.png";
   try{
